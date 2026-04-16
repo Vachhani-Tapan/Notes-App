@@ -1,4 +1,8 @@
+const mongoose = require("mongoose")
 const Notes = require("../models/note.model")
+
+const sanitizeId = (id) => (typeof id === "string" ? id.replace(/^:/, "") : id)
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id)
 
 
 // Home Route 
@@ -58,7 +62,12 @@ const getNotes = async (req, res) => {
 // GET Get notes by ID (/api/notes/:id)
 const getNotesID = async (req, res) => {
     try {
-        const noteId = req.params.id;
+        const noteId = sanitizeId(req.params.id);
+
+        if (!isValidObjectId(noteId)) {
+            return res.status(400).json({ message: "Invalid note id" })
+        }
+
         const Note = await Notes.findById(noteId);
 
         if (!Note) {
@@ -80,7 +89,12 @@ const getNotesID = async (req, res) => {
 const replaceNote = async (req, res) => {
     try {
         const notes = req.body;
-        const noteID = req.params.id;
+        const noteID = sanitizeId(req.params.id);
+
+        if (!isValidObjectId(noteID)) {
+            return res.status(400).json({ message: "Invalid note id" })
+        }
+
         const Note = await Notes.findByIdAndUpdate(
             noteID, notes
         )
@@ -103,7 +117,11 @@ const replaceNote = async (req, res) => {
 // PATCH /api/notes/:id — Update specific fields only
 const replacePart = async (req, res) => {
     try {
-        const noteID = req.params.id;
+        const noteID = sanitizeId(req.params.id);
+
+        if (!isValidObjectId(noteID)) {
+            return res.status(400).json({ message: "Invalid note id" })
+        }
 
         const updateNote = await Notes.findByIdAndUpdate(
             noteID,
@@ -136,8 +154,14 @@ const deleteBulkbyID = async (req, res) => {
             });
         }
 
+        const sanitizedIds = ids.map(sanitizeId)
+
+        if (!sanitizedIds.every(isValidObjectId)) {
+            return res.status(400).json({ message: "One or more ids are invalid" })
+        }
+
         const deleteUser = await Notes.deleteMany({
-            _id: { $in: ids }
+            _id: { $in: sanitizedIds }
         })
 
         res.status(200).json({
@@ -157,7 +181,12 @@ const deleteBulkbyID = async (req, res) => {
 // DELETE /api/notes/:id — Delete a single note
 const deletebyID = async (req, res) => {
     try {
-        const noteID = req.params.id;
+        const noteID = sanitizeId(req.params.id);
+
+        if (!isValidObjectId(noteID)) {
+            return res.status(400).json({ message: "Invalid note id" })
+        }
+
         const deleteUser = await Notes.findByIdAndDelete(noteID);
 
         if (!deleteUser) {
