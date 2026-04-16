@@ -49,4 +49,25 @@ const getNotes = async (req, res) => {
     }
 }
 
-module.exports = { createNote, bulkNotes, getNotes }
+
+// GET Get notes by ID (/api/notes/:id)
+const getNotesID = async (req,res) => {
+    try{
+        const noteId = req.params.id;
+        const Note = await Notes.findById(noteId);
+
+        if(!Note){
+            res.status(404).json({message : "User Not Found Enter valid ID", err : err.message})
+        }
+
+        res.status(200).json({
+            message : "Note fetched Successfully",
+            note : Note
+        });
+    }
+    catch(err){
+        res.status(500).json({message : "Server Error", err : err.message})
+    }
+}
+
+module.exports = { createNote, bulkNotes, getNotes , getNotesID}
