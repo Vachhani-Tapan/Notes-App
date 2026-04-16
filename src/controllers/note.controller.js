@@ -70,4 +70,28 @@ const getNotesID = async (req,res) => {
     }
 }
 
-module.exports = { createNote, bulkNotes, getNotes , getNotesID}
+
+// PUT (/api/notes/:id) — Replace a note completely
+const replaceNote = async(req,res) => {
+    try{
+        const notes = req.body;
+        const noteID = req.params.id;
+        const Note = await Notes.findByIdAndUpdate(
+            noteID,notes
+        )
+        if(!Note){
+            return res.status(404).json({
+                message: "Note not found. Enter a valid ID"
+            });
+        }
+        res.status(200).json({
+            message: "Note updated successfully",
+            note: Note
+        });
+    } 
+    catch(err){
+        res.status(500).json({message : "Server Error" , err : err.message})
+    }
+}
+
+module.exports = { createNote, bulkNotes, getNotes , getNotesID, replaceNote}
