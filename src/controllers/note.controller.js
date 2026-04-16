@@ -19,4 +19,25 @@ const createNote = async (req, res) => {
     }
 }
 
-module.exports = { createNote }
+
+// 2. POST Multiple Notes (/api/notes/bulk)
+const bulkNotes = async (req, res) => {
+    try {
+        const notes = req.body;
+        const newNotes = await Notes.insertMany(notes);
+
+        res.status(201).json({
+            msg: 'Multiple notes added successfully.',
+            notes: newNotes,
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// GET Get all Notes (/api/notes)
+
+
+module.exports = { createNote, bulkNotes }
