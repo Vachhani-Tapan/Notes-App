@@ -119,4 +119,21 @@ const replacePart = async (req, res) => {
     }
 }
 
-module.exports = { createNote, bulkNotes, getNotes, getNotesID, replaceNote, replacePart}
+
+// DELETE /api/notes/:id — Delete a single note
+const deletebyID = async (req,res) => {
+    try{
+        const noteID = req.params.id;
+        const deleteUser = await Notes.findByIdAndDelete(noteID); 
+
+        if(!deleteUser){
+            return res.status(404).json({msg : "User not found"})
+        }
+        res.status(200).json({message : "User deleted Successfully"})
+    }
+    catch(err){
+        res.status(500)
+    }
+}
+
+module.exports = { createNote, bulkNotes, getNotes, getNotesID, replaceNote, replacePart, deletebyID}
