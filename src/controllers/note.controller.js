@@ -89,11 +89,7 @@ const getNotesID = async (req, res) => {
 const replaceNote = async (req, res) => {
     try {
         const notes = req.body;
-        const noteID = sanitizeId(req.params.id);
-
-        if (!isValidObjectId(noteID)) {
-            return res.status(400).json({ message: "Invalid note id" })
-        }
+        const noteID = req.params.id;
 
         const Note = await Notes.findByIdAndUpdate(
             noteID, notes

@@ -1,6 +1,29 @@
 {
+  "name": "notes-app",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/Vachhani-Tapan/Notes-App#readme",
+  "bugs": {
+    "url": "https://github.com/Vachhani-Tapan/Notes-App/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vachhani-Tapan/Notes-App.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.4.1"
-  }
+    "mongoose": "^9.4.1",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {}
 }

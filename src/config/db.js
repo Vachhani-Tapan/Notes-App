@@ -1,8 +1,13 @@
-const mongoose = require("mongoose")
-async function ConnectDB() {
-    mongoose.connect("mongodb://localhost:27017/NotesApp")
-        .then(() => console.log("Successfully Connected to the DB"))
-        .catch((err) => console.log(err.message))
-}
+const mongoose = require("mongoose");
 
-module.exports = ConnectDB
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("MongoDB connected");
+    } catch (error) {
+        console.error("MongoDB connection error:", error.message);
+        process.exit(1);
+    }
+};
+
+module.exports = connectDB;
