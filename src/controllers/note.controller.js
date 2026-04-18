@@ -199,4 +199,4 @@ const deletebyID = async (req, res) => {
 }
 
 
-module.exports = { createNote, bulkNotes, getNotes, getNotesID, replaceNote, replacePart, deletebyID, deleteBulkbyID }
+module.exports = { createNote, bulkNotes, getNotes, getNotesID, replaceNote, replacePart, deletebyID, deleteBulkbyID, home }

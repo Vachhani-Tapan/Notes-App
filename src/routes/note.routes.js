@@ -3,8 +3,10 @@ const router = express.Router();
 
 const{
     createNote , bulkNotes , getNotes, getNotesID, replaceNote, replacePart, deletebyID, deleteBulkbyID
-} = require('../controllers/note.controller');
+, home} = require('../controllers/note.controller');
 
+
+router.get('/' , home);
 router.post('/api/notes' , createNote);
 router.post('/api/notes/bulk' , bulkNotes);
 router.get('/api/notes' , getNotes);
