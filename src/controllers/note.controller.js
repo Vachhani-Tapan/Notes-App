@@ -118,7 +118,8 @@ const replacePart = async (req, res) => {
 
         const updateNote = await Notes.findByIdAndUpdate(
             noteID,
-            { $set: req.body }
+            { $set: req.body },
+            { new: true }
         )
 
         if (!updateNote) {
@@ -127,7 +128,7 @@ const replacePart = async (req, res) => {
 
         res.status(200).json({
             message: "Note updated",
-            user: updateNote
+            note: updateNote
         });
     }
     catch (err) {
