@@ -168,9 +168,9 @@ const deleteBulkbyID = async (req, res) => {
 // DELETE /api/notes/:id — Delete a single note
 const deletebyID = async (req, res) => {
     try {
-        const noteID = sanitizeId(req.params.id);
+        const noteID = (req.params.id);
 
-        if (!isValidObjectId(noteID)) {
+        if (!(noteID)) {
             return res.status(400).json({ message: "Invalid note id" })
         }
 
