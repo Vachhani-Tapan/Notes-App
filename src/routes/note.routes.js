@@ -5,7 +5,9 @@ const {
     createNote, bulkNotes, getNotes, getNotesID, replaceNote, replacePart, deletebyID, deleteBulkbyID
     , home, getNotesByCategory, getNotesByPinnedStatus, getNoteSummary, filterNotes
     , filterPinnedNotes, filterCategoryNotes, filterNotesByDateRange, paginateNotes
-    , paginateNotesByCategory, sortNotes, sortPinnedNotes
+    , paginateNotesByCategory, sortNotes, sortPinnedNotes, searchTitleOnly, searchContentOnly
+    , searchTitleAndContent, filterAndSortNotes, filterAndPaginateNotes, sortAndPaginateNotes
+    , searchAndFilterNotes, searchSortAndPaginateNotes, filterSortAndPaginateNotes, queryMasterNotes
 } = require('../controllers/note.controller');
 
 
@@ -13,6 +15,22 @@ router.get('/', home);
 router.post('/api/notes', createNote);
 router.post('/api/notes/bulk', bulkNotes);
 router.get('/api/notes', getNotes);
+
+// Search routes
+router.get('/api/notes/search/content', searchContentOnly);
+router.get('/api/notes/search/all', searchTitleAndContent);
+router.get('/api/notes/search', searchTitleOnly);
+
+// Combined concepts routes
+router.get('/api/notes/filter-sort', filterAndSortNotes);
+router.get('/api/notes/filter-paginate', filterAndPaginateNotes);
+router.get('/api/notes/sort-paginate', sortAndPaginateNotes);
+router.get('/api/notes/search-filter', searchAndFilterNotes);
+router.get('/api/notes/search-sort-paginate', searchSortAndPaginateNotes);
+router.get('/api/notes/filter-sort-paginate', filterSortAndPaginateNotes);
+
+// Master route
+router.get('/api/notes/query', queryMasterNotes);
 
 // Filter routes
 router.get('/api/notes/filter/pinned', filterPinnedNotes);

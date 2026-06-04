@@ -442,6 +442,299 @@ const sortPinnedNotes = async (req, res) => {
 }
 
 
+// Search — 9. GET /api/notes/search — Search title only
+const searchTitleOnly = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) {
+            return res.status(400).json({ message: "Search query parameter 'q' is required" });
+        }
+        const notes = await Notes.find({ title: { $regex: q, $options: 'i' } });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Search — 10. GET /api/notes/search/content — Search content only
+const searchContentOnly = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) {
+            return res.status(400).json({ message: "Search query parameter 'q' is required" });
+        }
+        const notes = await Notes.find({ content: { $regex: q, $options: 'i' } });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Search — 11. GET /api/notes/search/all — Search title + content
+const searchTitleAndContent = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) {
+            return res.status(400).json({ message: "Search query parameter 'q' is required" });
+        }
+        const notes = await Notes.find({
+            $or: [
+                { title: { $regex: q, $options: 'i' } },
+                { content: { $regex: q, $options: 'i' } }
+            ]
+        });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Two Concepts Combined — 12. GET /api/notes/filter-sort — Query params + Sorting
+const filterAndSortNotes = async (req, res) => {
+    try {
+        const { category, isPinned, sortBy, order } = req.query;
+        const query = {};
+
+        if (category) {
+            query.category = category.toLowerCase();
+        }
+        if (isPinned !== undefined) {
+            query.isPinned = isPinned === 'true';
+        }
+
+        const sortField = sortBy || 'createdAt';
+        const sortOrder = order === 'asc' ? 1 : -1;
+
+        const notes = await Notes.find(query).sort({ [sortField]: sortOrder });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Two Concepts Combined — 13. GET /api/notes/filter-paginate — Query params + Pagination
+const filterAndPaginateNotes = async (req, res) => {
+    try {
+        const { category, isPinned } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = {};
+        if (category) {
+            query.category = category.toLowerCase();
+        }
+        if (isPinned !== undefined) {
+            query.isPinned = isPinned === 'true';
+        }
+
+        const totalNotes = await Notes.countDocuments(query);
+        const notes = await Notes.find(query).skip(skip).limit(limit);
+
+        res.status(200).json({
+            totalNotes,
+            totalPages: Math.ceil(totalNotes / limit),
+            currentPage: page,
+            limit,
+            notes
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Two Concepts Combined — 14. GET /api/notes/sort-paginate — Sorting + Pagination
+const sortAndPaginateNotes = async (req, res) => {
+    try {
+        const { sortBy, order } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const sortField = sortBy || 'createdAt';
+        const sortOrder = order === 'asc' ? 1 : -1;
+
+        const totalNotes = await Notes.countDocuments();
+        const notes = await Notes.find()
+            .sort({ [sortField]: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            totalNotes,
+            totalPages: Math.ceil(totalNotes / limit),
+            currentPage: page,
+            limit,
+            notes
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Two Concepts Combined — 15. GET /api/notes/search-filter — Search + Query params
+const searchAndFilterNotes = async (req, res) => {
+    try {
+        const { q, category, isPinned } = req.query;
+        const query = {};
+
+        if (q) {
+            query.$or = [
+                { title: { $regex: q, $options: 'i' } },
+                { content: { $regex: q, $options: 'i' } }
+            ];
+        }
+        if (category) {
+            query.category = category.toLowerCase();
+        }
+        if (isPinned !== undefined) {
+            query.isPinned = isPinned === 'true';
+        }
+
+        const notes = await Notes.find(query);
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Three Concepts Combined — 16. GET /api/notes/search-sort-paginate — Search + Sort + Paginate
+const searchSortAndPaginateNotes = async (req, res) => {
+    try {
+        const { q, sortBy, order } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = {};
+        if (q) {
+            query.$or = [
+                { title: { $regex: q, $options: 'i' } },
+                { content: { $regex: q, $options: 'i' } }
+            ];
+        }
+
+        const sortField = sortBy || 'createdAt';
+        const sortOrder = order === 'asc' ? 1 : -1;
+
+        const totalNotes = await Notes.countDocuments(query);
+        const notes = await Notes.find(query)
+            .sort({ [sortField]: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            totalNotes,
+            totalPages: Math.ceil(totalNotes / limit),
+            currentPage: page,
+            limit,
+            notes
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Three Concepts Combined — 17. GET /api/notes/filter-sort-paginate — Filter + Sort + Paginate
+const filterSortAndPaginateNotes = async (req, res) => {
+    try {
+        const { category, isPinned, sortBy, order } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = {};
+        if (category) {
+            query.category = category.toLowerCase();
+        }
+        if (isPinned !== undefined) {
+            query.isPinned = isPinned === 'true';
+        }
+
+        const sortField = sortBy || 'createdAt';
+        const sortOrder = order === 'asc' ? 1 : -1;
+
+        const totalNotes = await Notes.countDocuments(query);
+        const notes = await Notes.find(query)
+            .sort({ [sortField]: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            totalNotes,
+            totalPages: Math.ceil(totalNotes / limit),
+            currentPage: page,
+            limit,
+            notes
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// Master Endpoint — 18. GET /api/notes/query — Everything — search + filter + sort + paginate
+const queryMasterNotes = async (req, res) => {
+    try {
+        const { q, category, isPinned, sortBy, order } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = {};
+        if (q) {
+            query.$or = [
+                { title: { $regex: q, $options: 'i' } },
+                { content: { $regex: q, $options: 'i' } }
+            ];
+        }
+        if (category) {
+            query.category = category.toLowerCase();
+        }
+        if (isPinned !== undefined) {
+            query.isPinned = isPinned === 'true';
+        }
+
+        const sortField = sortBy || 'createdAt';
+        const sortOrder = order === 'asc' ? 1 : -1;
+
+        const totalNotes = await Notes.countDocuments(query);
+        const notes = await Notes.find(query)
+            .sort({ [sortField]: sortOrder })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            totalNotes,
+            totalPages: Math.ceil(totalNotes / limit),
+            currentPage: page,
+            limit,
+            notes
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
 module.exports = {
     createNote,
     bulkNotes,
@@ -462,5 +755,15 @@ module.exports = {
     paginateNotes,
     paginateNotesByCategory,
     sortNotes,
-    sortPinnedNotes
+    sortPinnedNotes,
+    searchTitleOnly,
+    searchContentOnly,
+    searchTitleAndContent,
+    filterAndSortNotes,
+    filterAndPaginateNotes,
+    sortAndPaginateNotes,
+    searchAndFilterNotes,
+    searchSortAndPaginateNotes,
+    filterSortAndPaginateNotes,
+    queryMasterNotes
 }
