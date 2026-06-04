@@ -191,4 +191,276 @@ const deletebyID = async (req, res) => {
 }
 
 
-module.exports = { createNote, bulkNotes, getNotes, getNotesID, replaceNote, replacePart, deletebyID, deleteBulkbyID, home }
+// 9. GET /api/notes/category/:category — Filter notes by category
+const getNotesByCategory = async (req, res) => {
+    try {
+        const { category } = req.params;
+        const validCategories = ["work", "personal", "study"];
+
+        if (!validCategories.includes(category.toLowerCase())) {
+            return res.status(400).json({
+                message: `Invalid category. Must be one of: ${validCategories.join(", ")}`
+            });
+        }
+
+        const notes = await Notes.find({ category: category.toLowerCase() });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 10. GET /api/notes/status/:isPinned — Filter notes by pinned status
+const getNotesByPinnedStatus = async (req, res) => {
+    try {
+        const { isPinned } = req.params;
+
+        if (isPinned !== "true" && isPinned !== "false") {
+            return res.status(400).json({
+                message: "isPinned parameter must be 'true' or 'false'"
+            });
+        }
+
+        const pinnedVal = isPinned === "true";
+        const notes = await Notes.find({ isPinned: pinnedVal });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 11. GET /api/notes/:id/summary — Route param + field select
+const getNoteSummary = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const note = await Notes.findById(id).select('title content category isPinned');
+
+        if (!note) {
+            return res.status(404).json({ message: "Note not found" });
+        }
+
+        res.status(200).json({
+            message: "Note summary fetched successfully",
+            note: {
+                _id: note._id,
+                title: note.title,
+                category: note.category,
+                isPinned: note.isPinned,
+                summary: note.content.length > 60 ? note.content.substring(0, 60) + "..." : note.content
+            }
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 12. GET /api/notes/filter — Query params
+const filterNotes = async (req, res) => {
+    try {
+        const { category, isPinned } = req.query;
+        const query = {};
+
+        if (category) {
+            query.category = category.toLowerCase();
+        }
+        if (isPinned !== undefined) {
+            query.isPinned = isPinned === 'true';
+        }
+
+        const notes = await Notes.find(query);
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 13. GET /api/notes/filter/pinned — Query params
+const filterPinnedNotes = async (req, res) => {
+    try {
+        const { category } = req.query;
+        const query = { isPinned: true };
+
+        if (category) {
+            query.category = category.toLowerCase();
+        }
+
+        const notes = await Notes.find(query);
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 14. GET /api/notes/filter/category — Query params
+const filterCategoryNotes = async (req, res) => {
+    try {
+        const { name, category, isPinned } = req.query;
+        const categoryVal = name || category;
+
+        if (!categoryVal) {
+            return res.status(400).json({ message: "Category parameter 'name' or 'category' is required" });
+        }
+
+        const query = { category: categoryVal.toLowerCase() };
+        if (isPinned !== undefined) {
+            query.isPinned = isPinned === 'true';
+        }
+
+        const notes = await Notes.find(query);
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 15. GET /api/notes/filter/date-range — Query params
+const filterNotesByDateRange = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: "Both 'startDate' and 'endDate' query parameters are required" });
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD" });
+        }
+
+        const query = {
+            createdAt: {
+                $gte: start,
+                $lte: end
+            }
+        };
+
+        const notes = await Notes.find(query);
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 16. GET /api/notes/paginate — Pagination
+const paginateNotes = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const totalNotes = await Notes.countDocuments();
+        const notes = await Notes.find()
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            totalNotes,
+            totalPages: Math.ceil(totalNotes / limit),
+            currentPage: page,
+            limit,
+            notes
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 17. GET /api/notes/paginate/category/:category — Pagination + Route param
+const paginateNotesByCategory = async (req, res) => {
+    try {
+        const { category } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = { category: category.toLowerCase() };
+        const totalNotes = await Notes.countDocuments(query);
+        const notes = await Notes.find(query)
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            category,
+            totalNotes,
+            totalPages: Math.ceil(totalNotes / limit),
+            currentPage: page,
+            limit,
+            notes
+        });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 18. GET /api/notes/sort — Sorting
+const sortNotes = async (req, res) => {
+    try {
+        const sortBy = req.query.sortBy || 'createdAt';
+        const order = req.query.order === 'asc' ? 1 : -1;
+
+        const notes = await Notes.find().sort({ [sortBy]: order });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+// 19. GET /api/notes/sort/pinned — Sorting on filtered set
+const sortPinnedNotes = async (req, res) => {
+    try {
+        const sortBy = req.query.sortBy || 'createdAt';
+        const order = req.query.order === 'asc' ? 1 : -1;
+
+        const notes = await Notes.find({ isPinned: true }).sort({ [sortBy]: order });
+        res.status(200).json(notes);
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error", err: err.message });
+    }
+}
+
+
+module.exports = {
+    createNote,
+    bulkNotes,
+    getNotes,
+    getNotesID,
+    replaceNote,
+    replacePart,
+    deletebyID,
+    deleteBulkbyID,
+    home,
+    getNotesByCategory,
+    getNotesByPinnedStatus,
+    getNoteSummary,
+    filterNotes,
+    filterPinnedNotes,
+    filterCategoryNotes,
+    filterNotesByDateRange,
+    paginateNotes,
+    paginateNotesByCategory,
+    sortNotes,
+    sortPinnedNotes
+}
